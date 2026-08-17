@@ -1,0 +1,10 @@
+# 1. 使用绝对路径，确保万无一失（注意：要把 \ 改成 /）
+path: /root/autodl-tmp/ultralytics-main/dataset
+
+# 2. 对应你左侧的真实结构：先进入 train 文件夹，再进入 images
+train: train/images  
+val: val/images  
+
+# 类别信息保持不变
+nc: 1
+names: ['bubble']

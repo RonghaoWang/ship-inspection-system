@@ -1,0 +1,80 @@
+[
+  {
+    "resolution": "640*400",
+    "camera_intrinsics": {
+      "fx": 311.382111,
+      "fy": 311.382111,
+      "cx": 318.5,
+      "cy": 201.5
+    },
+    "calibration_parameters": {
+      "Kc": 0.468,
+      "Kv": 108.0
+    }
+  },
+  {
+    "resolution": "640*480",
+    "camera_intrinsics": {
+      "fx": 372.485596,
+      "fy": 372.485596,
+      "cx": 318.5,
+      "cy": 243.0
+    },
+    "calibration_parameters": {
+      "Kc": 0.677,
+      "Kv": 182.0
+    }
+  },
+  {
+    "resolution": "848*480",
+    "camera_intrinsics": {
+      "fx": 411.286194,
+      "fy": 411.286194,
+      "cx": 422.34375,
+      "cy": 241.987518
+    },
+    "calibration_parameters": {
+      "Kc": 0.827,
+      "Kv": 210.0
+    }
+  },
+  {
+    "resolution": "1280*720",
+    "camera_intrinsics": {
+      "fx": 620.809326,
+      "fy": 620.809326,
+      "cx": 637.5,
+      "cy": 363.0
+    },
+    "calibration_parameters": {
+      "Kc": 0.831,
+      "Kv": 256.0
+    }
+  },
+  {
+    "resolution": "640*360",
+    "camera_intrinsics": {
+      "fx": 311.382111,
+      "fy": 311.382111,
+      "cx": 318.5,
+      "cy": 181.5
+    },
+    "calibration_parameters": {
+      "Kc": 0.845,
+      "Kv": 306.0
+    }
+  },
+  {
+    "resolution": "424*240",
+    "camera_intrinsics": {
+      "fx": 206.290649,
+      "fy": 206.290649,
+      "cx": 211.006256,
+      "cy": 121.493759
+    },
+    "calibration_parameters": {
+      "Kc": 0.853,
+      "Kv": 270.0
+    }
+  }
+]

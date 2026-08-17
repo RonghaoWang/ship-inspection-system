@@ -1,0 +1,9 @@
+[08/11 18:36:34.890274][info][29660][DeviceManager.cpp:25] Current found device(s): (0)
+[08/11 18:36:34.890379][info][29660][DeviceManager.cpp:339] Enable net device enumeration: true
+[08/11 18:36:37.012368][info][29660][DeviceManager.cpp:25] Current device(s) list: (0)
+[08/11 18:36:41.110190][info][29660][DeviceManager.cpp:25] Current found device(s): (0)
+[08/11 18:36:41.110247][info][29660][DeviceManager.cpp:339] Enable net device enumeration: true
+[08/11 18:36:43.149415][info][29660][DeviceManager.cpp:25] Current device(s) list: (0)
+[08/11 19:49:46.829780][info][33640][DeviceManager.cpp:25] Current found device(s): (0)
+[08/11 19:49:46.830239][info][33640][DeviceManager.cpp:339] Enable net device enumeration: true
+[08/11 19:49:48.883295][info][33640][DeviceManager.cpp:25] Current device(s) list: (0)

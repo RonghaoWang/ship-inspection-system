@@ -1,0 +1,10 @@
+pyorbbecsdk2==2.0.18
+onnxruntime
+opencv_python
+numpy>=2.0.0
+scipy
+Pillow
+PySide6
+# openpyxl
+# torch
+# rknn-toolkit-lite2
