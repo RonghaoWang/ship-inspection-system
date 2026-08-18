@@ -931,6 +931,8 @@ class CoatingWidget(QWidget):
         self._latest_seg_image: np.ndarray | None = None
         self._latest_area_results: list[tuple[int, float]] = []
         self._latest_n_regions: int = 0
+        self._latest_area_method: str = ""
+        self._current_source_name: str | None = None
 
         self._import_rgb_image: np.ndarray | None = None
         self._import_depth_raw: np.ndarray | None = None
@@ -989,9 +991,11 @@ class CoatingWidget(QWidget):
         self.btn_stop = QPushButton("停止")
         self.btn_save = QPushButton("保存当前帧")
         self.btn_import = QPushButton("离线导入 RGB-D")
+        self.btn_export_json = QPushButton("导出 JSON 报告")
         self.btn_stop.setEnabled(False)
         self.btn_save.setEnabled(False)
         self.btn_import.setEnabled(True)
+        self.btn_export_json.setEnabled(False)
         run_btn_row = QWidget()
         run_btn_layout = QHBoxLayout(run_btn_row)
         run_btn_layout.setContentsMargins(0, 0, 0, 0)
@@ -999,6 +1003,7 @@ class CoatingWidget(QWidget):
         run_btn_layout.addWidget(self.btn_stop)
         run_btn_layout.addWidget(self.btn_save)
         run_btn_layout.addWidget(self.btn_import)
+        run_btn_layout.addWidget(self.btn_export_json)
         run_form.addRow(run_btn_row)
 
         model_group = QGroupBox("模型加载")
@@ -1128,6 +1133,7 @@ class CoatingWidget(QWidget):
         self.btn_stop.clicked.connect(self.on_stop)
         self.btn_save.clicked.connect(self.on_save)
         self.btn_import.clicked.connect(self.on_import)
+        self.btn_export_json.clicked.connect(self.on_export_json)
         self.btn_browse_refine_model.clicked.connect(self.on_browse_refine_model)
         self.btn_browse_segment_model.clicked.connect(self.on_browse_segment_model)
         self.chk_load_refine_model.toggled.connect(self.on_load_refine_model_toggled)
@@ -1459,12 +1465,14 @@ class CoatingWidget(QWidget):
         self._release_import_segment_model()
         self._release_import_refine_model()
         self._import_reprocess_timer.stop()
+        self._current_source_name = None
         self.worker_thread.start()
 
         self.btn_start.setEnabled(False)
         self.btn_stop.setEnabled(True)
         self.btn_save.setEnabled(True)
         self.btn_import.setEnabled(False)
+        self.btn_export_json.setEnabled(False)
         self._append_log("[UI] 后台线程已启动")
 
     @Slot()
@@ -1542,6 +1550,12 @@ class CoatingWidget(QWidget):
                         writer.writerow([region_id, f"{area_cm2:.6f}"])
                 saved_items.append(str(csv_path))
 
+                json_path = save_dir / "area_report.json"
+                report = self._build_area_report(source_name=f"{stamp}_{millis:03d}")
+                with json_path.open("w", encoding="utf-8") as f:
+                    json.dump(report, f, ensure_ascii=False, indent=2)
+                saved_items.append(str(json_path))
+
             self._append_log("[Save] 保存成功:")
             for item in saved_items:
                 self._append_log(f"[Save] {item}")
@@ -1549,6 +1563,69 @@ class CoatingWidget(QWidget):
         except Exception as exc:
             self._append_log(f"[Save] 保存失败: {exc}")
             QMessageBox.critical(self, "保存失败", str(exc))
+
+    def _build_area_report(self, source_name: str | None = None) -> dict:
+        """构造涂层损坏面积检测的结构化 JSON 报告。"""
+        regions = [
+            {"region_id": int(rid), "area_cm2": round(float(area), 6)}
+            for rid, area in self._latest_area_results
+        ]
+        total_area_cm2 = float(sum(a for _, a in self._latest_area_results))
+        name = source_name or self._current_source_name or time.strftime(
+            "%Y%m%d_%H%M%S"
+        )
+        return {
+            "module": "coating_damage",
+            "image": name,
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+            "area_method": self._latest_area_method,
+            "unit": "cm^2",
+            "n_regions": int(self._latest_n_regions),
+            "regions": regions,
+            "total_area_cm2": round(total_area_cm2, 6),
+        }
+
+    @Slot()
+    def on_export_json(self) -> None:
+        if self._latest_n_regions <= 0 or not self._latest_area_results:
+            QMessageBox.information(
+                self, "导出失败", "当前无可导出的面积结果，请先完成一次分割"
+            )
+            return
+
+        default_name = (
+            f"{Path(self._current_source_name).stem}_area_report.json"
+            if self._current_source_name
+            else f"area_report_{time.strftime('%Y%m%d_%H%M%S')}.json"
+        )
+        save_dir = Path("output") / "reports"
+        save_dir.mkdir(parents=True, exist_ok=True)
+        default_path = str(save_dir / default_name)
+
+        target_path, _ = QFileDialog.getSaveFileName(
+            self,
+            "导出 JSON 报告",
+            default_path,
+            "JSON Files (*.json)",
+        )
+        if not target_path:
+            return
+
+        try:
+            report = self._build_area_report()
+            with open(target_path, "w", encoding="utf-8") as f:
+                json.dump(report, f, ensure_ascii=False, indent=2)
+            self._append_log(f"[Export] JSON 报告已导出: {target_path}")
+            QMessageBox.information(
+                self,
+                "导出成功",
+                f"已导出到:\n{target_path}\n\n"
+                f"共 {report['n_regions']} 处损坏，总面积 "
+                f"{report['total_area_cm2']:.2f} cm²",
+            )
+        except Exception as exc:
+            self._append_log(f"[Export] 导出失败: {exc}")
+            QMessageBox.critical(self, "导出失败", str(exc))
 
     @Slot()
     def on_import(self) -> None:
@@ -1602,6 +1679,7 @@ class CoatingWidget(QWidget):
             else None
         )
         self._import_source_id += 1
+        self._current_source_name = rgb_path.name
 
         if self._import_depth_raw is None and self._import_depth_refined is None:
             QMessageBox.warning(self, "导入失败", f"深度图读取失败: {depth_path}")
@@ -1698,6 +1776,10 @@ class CoatingWidget(QWidget):
         self._latest_seg_image = seg_image
         self._latest_area_results = list(area_results)
         self._latest_n_regions = int(n_regions)
+        self._latest_area_method = str(method_name)
+        self.btn_export_json.setEnabled(
+            self._latest_n_regions > 0 and bool(self._latest_area_results)
+        )
 
         aligned_pix = bgr_to_qpixmap(aligned_image, self._aligned_target_size)
         seg_pix = bgr_to_qpixmap(seg_image, self._seg_target_size)
